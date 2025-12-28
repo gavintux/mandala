@@ -78,7 +78,7 @@ const USER_CONFIG = {
 ```
 ### 3. 本地運行
 直接使用瀏覽器打開 demomandala.html 即可開始使用。
-📸 介面預覽
+## 📸 介面預覽
 - [Demo Mandala Garden](https://gavintux.github.io/yi/demomandala.html)
 
 ## 📂 專案結構
