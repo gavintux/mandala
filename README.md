@@ -58,10 +58,10 @@ Mandala Garden 是一款基於網頁的曼陀羅思考法（Mandala Chart）工�
 ```bash
 git clone [https://github.com/gavintux/您的專案名稱.git](https://github.com/gavintux/您的專案名稱.git)
 cd 您的專案名稱
-''' 
+```
 ### 2. 配置 Firebase (重要)
 打開 demomandala.html，找到頂部的 USER_CONFIG 區域。為了確保數據安全與獨立性，建議您建立自己的 Firebase 專案並替換以下參數：
-''' 
+``` html
 const USER_CONFIG = {
     seo: { /* ... */ },
     firebase: { 
@@ -75,7 +75,7 @@ const USER_CONFIG = {
     },
     system: { collectionName: 'mandala_charts', defaultGridSize: 3, defaultViewStyle: 'standard' }
 };
-'''
+```
 ### 3. 本地運行
 直接使用瀏覽器打開 demomandala.html 即可開始使用。
 📸 介面預覽
