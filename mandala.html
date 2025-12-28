@@ -84,7 +84,7 @@
         .md-content ul { padding-left: 1rem; list-style: disc; }
         .md-content ol { padding-left: 1rem; list-style: decimal; }
         
-        /* Custom scrollbar for emoji list */
+        /* Custom scrollbar for emoji list and sidebar */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -103,6 +103,7 @@
                         appId: "1:23185940342:web:ac7b9919f39ae9858a6457",
                         measurementId: "G-W9DJ13E9CH"
                      },
+
             system: { collectionName: 'mandala_charts', defaultGridSize: 3, defaultViewStyle: 'standard' }
         };
 
@@ -891,45 +892,48 @@
             // -- Sidebar Component --
             const SidebarContent = () => (
                 <>
-                    <div className="mb-6 px-2 text-center">
+                    <div className="mb-6 px-2 text-center shrink-0">
                         <div className="text-lg font-medium text-stone-500 font-serif leading-none">{getUserName(user)}'s</div>
                         <div className="text-xl font-bold text-stone-800 garden-title mt-1">Mandala Garden</div>
                     </div>
                     
-                    <button 
-                        onClick={() => { setShowGlobalSearchModal(true); setIsSidebarOpen(false); }} 
-                        className="w-full text-left p-2 rounded flex items-center gap-2 hover:bg-stone-50 text-stone-600 mb-2 border border-stone-100"
-                    >
-                        <Icons.Search/> <span>全域搜尋...</span>
-                    </button>
+                    <div className="flex-1 overflow-y-auto -mx-4 px-4 space-y-1"> {/* Scrollable Container */}
+                        <button 
+                            onClick={() => { setShowGlobalSearchModal(true); setIsSidebarOpen(false); }} 
+                            className="w-full text-left p-2 rounded flex items-center gap-2 hover:bg-stone-50 text-stone-600 mb-2 border border-stone-100"
+                        >
+                            <Icons.Search/> <span>全域搜尋...</span>
+                        </button>
 
-                    <button onClick={()=>{ setActiveCategory('All'); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded ${activeCategory==='All'?'bg-emerald-50':''}`}><Icons.Folder/> 全部檔案 ({activeFileCount})</button>
-                    <button onClick={()=>{ setActiveCategory('Trash'); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded ${activeCategory==='Trash'?'bg-rose-50':''}`}><Icons.Trash/> 垃圾筒 ({trashFileCount})</button>
-                    
-                    <div className="border-t my-2 pt-2">
-                        <div className="px-2 text-xs font-bold text-stone-400 mb-2 flex justify-between items-center">
-                            <span>標籤分類</span>
-                            <span className="text-[10px] bg-stone-100 px-1 rounded">{tagStats.length}</span>
-                        </div>
-                        <div className="space-y-1">
-                            {tagStats.length === 0 && <div className="px-2 text-xs text-stone-300">尚無標籤 (使用 #tag)</div>}
-                            {tagStats.slice(0, showAllTags ? undefined : 8).map(tag => (
-                                <button key={tag.name} onClick={()=>{ setActiveCategory(tag.name); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded flex justify-between items-center text-sm ${activeCategory===tag.name?'bg-emerald-50 text-emerald-700':''}`}>
-                                    <span className="flex items-center gap-2 truncate"><Icons.Tag/> {tag.name}</span>
-                                    <span className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">{tag.count}</span>
-                                </button>
-                            ))}
-                            {tagStats.length > 8 && (
-                                <button onClick={()=>setShowAllTags(!showAllTags)} className="text-xs text-stone-400 w-full text-left px-2 py-1 hover:text-stone-600">
-                                    {showAllTags ? '收起標籤' : `顯示更多 (${tagStats.length - 8})`}
-                                </button>
-                            )}
+                        <button onClick={()=>{ setActiveCategory('All'); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded ${activeCategory==='All'?'bg-emerald-50':''}`}><Icons.Folder/> 全部檔案 ({activeFileCount})</button>
+                        <button onClick={()=>{ setActiveCategory('Trash'); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded ${activeCategory==='Trash'?'bg-rose-50':''}`}><Icons.Trash/> 垃圾筒 ({trashFileCount})</button>
+                        
+                        <div className="border-t my-2 pt-2">
+                            <div className="px-2 text-xs font-bold text-stone-400 mb-2 flex justify-between items-center">
+                                <span>標籤分類</span>
+                                <span className="text-[10px] bg-stone-100 px-1 rounded">{tagStats.length}</span>
+                            </div>
+                            <div className="space-y-1 pb-2"> {/* Added pb-2 for bottom spacing in scroll */}
+                                {tagStats.length === 0 && <div className="px-2 text-xs text-stone-300">尚無標籤 (使用 #tag)</div>}
+                                {tagStats.slice(0, showAllTags ? undefined : 8).map(tag => (
+                                    <button key={tag.name} onClick={()=>{ setActiveCategory(tag.name); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded flex justify-between items-center text-sm ${activeCategory===tag.name?'bg-emerald-50 text-emerald-700':''}`}>
+                                        <span className="flex items-center gap-2 truncate"><Icons.Tag/> {tag.name}</span>
+                                        <span className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">{tag.count}</span>
+                                    </button>
+                                ))}
+                                {tagStats.length > 8 && (
+                                    <button onClick={()=>setShowAllTags(!showAllTags)} className="text-xs text-stone-400 w-full text-left px-2 py-1 hover:text-stone-600">
+                                        {showAllTags ? '收起標籤' : `顯示更多 (${tagStats.length - 8})`}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="border-t my-2 pt-2 mt-auto">
+                    <div className="border-t my-2 pt-2 mt-auto shrink-0">
                         <button onClick={()=>{ setModalMode('new'); setShowSaveAsModal(true); setIsSidebarOpen(false); }} className="w-full text-left p-2"><Icons.Plus/> 新增檔案</button>
                         <button onClick={()=>{ setShowImportModal(true); setIsSidebarOpen(false); }} className="w-full text-left p-2"><Icons.Share/> 匯入檔案</button>
+                        <button onClick={()=>window.open(USER_CONFIG.seo.logoLink, '_blank')} className="w-full text-left p-2"><Icons.Home/> 個人首頁</button>
                         <button onClick={()=>auth.signOut()} className="w-full text-left p-2"><Icons.SignOut/> 登出</button>
                     </div>
                 </>
