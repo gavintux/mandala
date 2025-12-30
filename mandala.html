@@ -72,7 +72,7 @@
         .nav-cell.return-cell::after { content: "↩"; }
         .nav-cell:hover::after { transform: scale(1.2); opacity: 1; }
         
-        .edit-btn-overlay { position: absolute; bottom: 3px; right: 3px; width: 20px; height: 20px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; cursor: pointer; z-index: 30; opacity: 0; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
+        .edit-btn-overlay { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; cursor: pointer; z-index: 30; opacity: 0; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; }
         .group:hover .edit-btn-overlay { opacity: 1; }
         .edit-btn-overlay:hover { background: #10b981; color: white; border-color: #10b981; }
 
@@ -102,8 +102,7 @@
                         messagingSenderId: "23185940342",
                         appId: "1:23185940342:web:ac7b9919f39ae9858a6457",
                         measurementId: "G-W9DJ13E9CH"
-                     },            
-            
+                     },          
             system: { collectionName: 'mandala_charts', defaultGridSize: 3, defaultViewStyle: 'standard' }
         };
 
@@ -112,19 +111,12 @@
         const db = firebase.firestore();
 
         // Utils
-        // Calculate contrast text color (Black/White) based on background brightness
         const getContrastColor = (hex) => {
-            if (!hex || !hex.startsWith('#')) return '#44403c'; // Default to dark stone color
-            
-            // Parse hex to RGB
+            if (!hex || !hex.startsWith('#')) return '#44403c'; 
             const r = parseInt(hex.substring(1, 3), 16);
             const g = parseInt(hex.substring(3, 5), 16);
             const b = parseInt(hex.substring(5, 7), 16);
-            
-            // Calculate brightness (YIQ formula)
             const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-            
-            // Return white for dark backgrounds, dark stone for light backgrounds
             return (yiq >= 128) ? '#44403c' : '#ffffff';
         };
 
@@ -136,42 +128,17 @@
         const extractTags = (text) => (text?.match(/#[\w\u4e00-\u9fa5]+/g) || []).map(x => x.substring(1));
         const parseCategories = (s) => (!s ? ['未分類'] : s.split(/[,，\s]+/).filter(c=>c.trim().length>0));
         
-        // Advanced Search Matcher
-        const checkSearchMatch = (text, query) => {
-            if (!query) return true;
-            if (!text && text !== 0) return false;
-            const target = String(text).toLowerCase();
-            
-            // Boolean Logic: OR logic first (split by ' OR ')
-            const orGroups = query.split(/\s+OR\s+/i);
-            
-            return orGroups.some(group => {
-                // Inside OR group: AND logic (split by space)
-                const terms = group.trim().split(/\s+/);
-                return terms.every(term => {
-                    // NOT logic: -term
-                    if (term.startsWith('-')) {
-                        const cleanTerm = term.substring(1).toLowerCase();
-                        return cleanTerm && !target.includes(cleanTerm);
-                    }
-                    return target.includes(term.toLowerCase());
-                });
-            });
-        };
-
-        // Helper to get formatted name
         const getUserName = (user) => {
             if (!user || !user.email) return "Guest";
             const name = user.email.split('@')[0];
             return name.charAt(0).toUpperCase() + name.slice(1);
         };
 
-        // --- NEW EMOJI STRUCTURE ---
         const EMOJI_CATEGORIES = {
             "表情": ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '👏', '👋', '👍', '👎', '👊', '✊', '🤛', '🤜', '🤞', '✌️', '🤟', '🤘', '👌', '🤏', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '🙏', '💪', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️'],
             "自然": ['🌿', '🌸', '🌼', '🍄', '🌱', '🍃', '🌻', '🌵', '🌺', '🍂', '🌹', '🌷', '💐', '🪴', '🌲', '🌳', '🌴', '🪵', '🪨', '🌾', '🎋', '🍁', '🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', '🍐', '🍑', '🍒', '🍓', '🫐', '🥝', '🍅', '🫒', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅', '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐻‍❄️', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🪱', '🐛', '🦋', '🐌', '🐞', '🐜', '🪰', '🪲', '🪳', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🦭', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🦣', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🦬', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡', '🦫', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔', '🐾', '🐉', '🐲', '☀️', '🌤️', '⛅', '🌥️', '☁️', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️', '💨', '💧', '💦', '☔', '☂️', '🌊', '🌫️', '🌍', '🌎', '🌏', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘', '🌙', '🌚', '🌛', '🌜', '🌞', '⭐', '🌟', '🌠', '🌌', '🪐', '💫', '☄️', '🔥', '🌋'],
-            "物件": ['💡', '🔦', '🏮', '🪔', '📔', '📕', '📖', '📗', '📘', '📙', '📚', '📓', '📒', '📃', '📜', '📄', '📰', '🗞️', '📑', '🔖', '🏷️', '💰', '🪙', '💴', '💵', '💶', '💷', '💸', '💳', '🧾', '💹', '✉️', '📧', '📨', '📩', '📤', '📥', '📦', '📫', '📪', '📬', '📭', '📮', '🗳️', '✏️', '✒️', '🖋️', '🖊️', '🖌️', '🖍️', '📝', '💼', '📁', '📂', '🗂️', '📅', '📆', '🗒️', '🗓️', '📇', '📈', '📉', '📊', '📋', '📌', '📍', '📎', '🖇️', '📏', '📐', '✂️', '🗃️', '🗄️', '🗑️', '🔒', '🔓', '🔏', '🔐', '🔑', '🗝️', '🔨', '🪓', '⛏️', '⚒️', '🛠️', '🗡️', '⚔️', '🔫', '🪃', '🏹', '🛡️', '🪚', '🔧', '🪛', '🔩', '⚙️', '🗜️', '⚖️', '🦯', '🔗', '⛓️', '🪝', '🧰', '🧲', '🪜', '⚗️', '🧪', '🧫', '🧬', '🔬', '🔭', '📡', '💉', '🩸', '💊', '🩹', '🩺', '🚪', '🛗', '🪞', '🪟', '🛏️', '🛋️', '🪑', '🚽', '🪠', '🚿', '🛁', '🧼', '🪥', '🪒', '🧽', '🪣', '🧴', '🛎️', '🧸', '🪆', '🖼️', '🛍️', '🛒', '🎁', '🎈', '🎏', '🎀', '🪄', '🪅', '🎊', '🎉', '🎎', '🎐', '🧧', '⌚', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💽', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🏍️', '🛵', '🚲', '🦼', '🦽', '🛺', '🛹', '🛼', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '💺', '🛰️', '🚀', '🛸', '🚁', '🛶', '⛵', '🚤', '🛥️', '🛳️', '⛴️', '🚢', '⚓', '🚧', '⛽', '🚏', '🚦', '🚥', '🛑'],
-            "符號": ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🛗', '🈳', '🈂️', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼', '⚧', '🚻', '🚮', '🎦', '📶', '🈁', '🔣', 'ℹ️', '🔤', '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', '#️⃣', '*️⃣', '⏏️', '▶️', '⏸️', '⏯️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️', '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔀', '🔁', '🔂', '🔄', '🔃', '🎵', '🎶', '➕', '➖', '➗', '✖️', '♾️', '💲', '💱', '™️', '©️', '®️', '👁️‍🗨️', '🔚', '🔙', '🔛', '🔝', '🔜', '〰️', '➰', '➿', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🔸', '🔹', '🔶', '🔷', '🔳', '🔲', '▪️', '▫️', '◾', '◽', '◼️', '◻️', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '⬛', '⬜', '🟫', '🔈', '🔇', '🔉', '🔊', '🔔', '🔕', '📣', '📢', '💬', '💭', '🗯️']
+            "物件": ['💡', '🔦', '🏮', '🪔', '📔', '📕', '📖', '📗', '📘', '📙', '📚', '📓', '📒', '📃', '📜', '📄', '📰', '🗞️', '📑', '🔖', '🏷️', '💰', '🪙', '💴', '💵', '💶', '💷', '💸', '💳', '🧾', '💹', '✉️', '📧', '📨', '📩', '📤', '📥', '📦', '📫', '📪', '📬', '📭', '📮', '🗳️', '✏️', '✒️', '🖋️', '🖊️', '🖌️', '🖍️', '📝', '💼', '📁', '📂', '🗂️', '📅', '📆', '🗒️', '🗓️', '📇', '📈', '📉', '📊', '📋', '📌', '📍', '📎', '🖇️', '📏', '📐', '✂️', '🗃️', '🗄️', '🗑️', '🔒', '🔓', '🔏', '🔐', '🔑', '🗝️', '🔨', '🪓', '⛏️', '⚒️', '🛠️', '🗡️', '⚔️', '🔫', '🪃', '🏹', '🛡️', '🪚', '🔧', '🪛', '🔩', '⚙️', '🗜️', '⚖️', '🦯', '🔗', '⛓️', '🪝', '🧰', '🧲', '🪜', '⚗️', '🧪', '🧫', '🧬', '🔬', '🔭', '📡', '💉', '🩸', '💊', '🩹', '🩺', '🚪', '𛛗', '🪞', '🪟', '🛏️', '🛋️', '🪑', '🚽', '🪠', '🚿', '🛁', '🧼', '🪥', '🪒', '🧽', '🪣', '🧴', '🛎️', '🧸', '🪆', '🖼️', '🛍️', '🛒', '🎁', '🎈', '🎏', '🎀', '🪄', '🪅', '🎊', '🎉', '🎎', '🎐', '🧧', '⌚', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💽', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙️', '', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '𛛗', '🚚', '🚛', '🚜', '🏍️', '🛵', '🚲', '🦼', '🦽', '🛺', '🛹', '🛼', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '𒒺', '🛰️', '🚀', '🛸', '🚁', '🛶', '⛵', '🚤', '🛥️', '🛳️', '⛴️', '🚢', '⚓', '🚧', '⛽', '🚏', '🚦', '🚥', '🛑'],
+            "符號": ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '𛛗', '🈳', '🈂️', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼', '⚧', '🚻', '🚮', '🎦', '📶', 'ℹ️', '🔡', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', '#️⃣', '*️⃣', '⏏️', '▶️', '⏸️', '⏯️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️', '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔁', '𔀀', '🔂', '🔄', '🔃', '🎵', '🎶', '➕', '➖', '➗', '✖️', '♾️', '💲', '💱', '™️', '©️', '®️', '👁️‍🗨️', '🔚', '🔙', '🔛', '🔝', '🔜', '〰️', '➰', '➿', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🔸', '🔹', '🔶', '🔷', '🔳', '𔣠', '▪️', '▫️', '◾', '◽', '◼️', '◻️', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '⬛', '⬜', '🟫', '🔈', '🔇', '🔉', '🔊', '🔔', '𔣣', '📣', '📢', '💬', '💭', '🗯️']
         };
         
         const Icons = {
@@ -192,10 +159,41 @@
             Photo: () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>,
             Menu: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>,
             X: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>,
-            Tag: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+            Tag: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>,
+            Eye: () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
+            ChevronLeft: () => <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>,
+            ChevronRight: () => <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
         };
 
         const { useState, useEffect, useMemo, useRef } = React;
+        
+        // Component to handle note display and overflow detection
+        const CellNote = ({ note, onClick }) => {
+            const textRef = useRef(null);
+            const [isOverflowing, setIsOverflowing] = useState(false);
+
+            useEffect(() => {
+                if (textRef.current) {
+                    const el = textRef.current;
+                    setIsOverflowing(el.scrollHeight > el.clientHeight);
+                }
+            }, [note]);
+
+            return (
+                <div className="relative w-full flex-1 overflow-hidden min-h-0 group/note">
+                     <div ref={textRef} className="text-[10px] opacity-80 md-content w-full text-left h-full overflow-hidden break-words" dangerouslySetInnerHTML={{__html: safeMarkdown(note||'')}} />
+                     {isOverflowing && (
+                         <div 
+                            onClick={(e) => { e.stopPropagation(); onClick(); }}
+                            className="absolute bottom-0 right-0 bg-white/95 backdrop-blur-sm p-0.5 px-1 rounded-tl-lg shadow-sm cursor-pointer text-emerald-600 hover:bg-emerald-100 hover:text-emerald-800 transition-all z-10 flex items-center justify-center border-t border-l border-stone-100"
+                            title="顯示完整內容"
+                         >
+                            <Icons.Eye />
+                         </div>
+                     )}
+                </div>
+            )
+        };
 
         function App() {
             // States
@@ -209,7 +207,8 @@
             const [isUploading, setIsUploading] = useState(false);
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [showAllTags, setShowAllTags] = useState(false);
-            const [emojiTab, setEmojiTab] = useState('表情'); 
+            const [emojiTab, setEmojiTab] = useState('表情');
+            const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false); 
 
             // Data
             const [fileList, setFileList] = useState([]);
@@ -224,26 +223,24 @@
 
             // Modals
             const [selectedCell, setSelectedCell] = useState(null);
+            const [viewOnlyCell, setViewOnlyCell] = useState(null); // New state for read-only view
             const [showSaveAsModal, setShowSaveAsModal] = useState(false);
-            const [modalMode, setModalMode] = useState('new'); // 'new' or 'save_as'
+            const [modalMode, setModalMode] = useState('new');
             const [showImportModal, setShowImportModal] = useState(false);
             const [showExportModal, setShowExportModal] = useState(false);
             const [showShareModal, setShowShareModal] = useState(false);
             const [showGlobalSearchModal, setShowGlobalSearchModal] = useState(false);
             const [showMetadataModal, setShowMetadataModal] = useState(false);
-            const [previewImage, setPreviewImage] = useState(null);
-            const [editActiveField, setEditActiveField] = useState('title'); // 'title' or 'note'
+            const [previewImages, setPreviewImages] = useState(null); // Changed to array or null
+            const [previewIndex, setPreviewIndex] = useState(0);
+            const [editActiveField, setEditActiveField] = useState('title');
             
             // Other
             const [searchQuery, setSearchQuery] = useState("");
             const [globalSearchResults, setGlobalSearchResults] = useState([]);
             const [importCode, setImportCode] = useState("");
             const [saveStatus, setSaveStatus] = useState('saved');
-            const [isEditingTitle, setIsEditingTitle] = useState(false);
             const [activeTags, setActiveTags] = useState([]);
-            const [showAllCategories, setShowAllCategories] = useState(false);
-            const [currentPage, setCurrentPage] = useState(1);
-            const ITEMS_PER_PAGE = 12;
 
             const fileInputRef = useRef(null);
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'linkc-mandala-app-v1';
@@ -257,15 +254,11 @@
                 fileList.forEach(f => {
                     if (f.deleted) return;
                     const fileTags = new Set();
-                    
-                    // 1. From Category field
                     if (f.category) {
                         f.category.split(/[,，\s]+/).forEach(c => {
                             if (c.trim() && c.trim() !== '未分類') fileTags.add(c.trim());
                         });
                     }
-                    
-                    // 2. From Hashtags in cells
                     if (f.cells) {
                         Object.values(f.cells).forEach(cell => {
                             const content = (cell.title || '') + ' ' + (cell.note || '');
@@ -273,7 +266,6 @@
                             extracted.forEach(t => fileTags.add(t));
                         });
                     }
-                    
                     fileTags.forEach(t => {
                         stats[t] = (stats[t] || 0) + 1;
                     });
@@ -286,10 +278,8 @@
                 return fileList.filter(f => {
                     if (activeCategory === 'Trash') return f.deleted;
                     if (f.deleted) return false;
-                    
                     if (activeCategory === 'All') return true;
                     
-                    // Check if file belongs to active Tag
                     const fileTags = new Set();
                     if (f.category) f.category.split(/[,，\s]+/).forEach(c => c.trim() && fileTags.add(c.trim()));
                     if (f.cells) {
@@ -303,7 +293,6 @@
 
 
             // --- Effects ---
-            // 1. Auth Listener (Runs once)
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged(u => {
                     setUser(u);
@@ -312,7 +301,6 @@
                 return () => unsubscribe();
             }, []);
 
-            // 2. File List Fetcher
             useEffect(() => {
                 if (user && viewMode === 'browser') {
                     fetchFileList(user);
@@ -363,14 +351,6 @@
                     else await auth.createUserWithEmailAndPassword(email, password);
                 } catch(err) { setAuthError(err.message); }
                 setLoading(false);
-            };
-
-            const handleSignOut = () => {
-                auth.signOut().then(() => {
-                    setUser(null);
-                    setFileList([]);
-                    setViewMode('browser');
-                });
             };
 
             const fetchFileList = async (u = user) => {
@@ -458,7 +438,6 @@
                 const prev = data[k] || {};
                 let newData = { ...data, [k]: { ...prev, [field]: val } };
                 
-                // --- SYNC LOGIC ---
                 if (gridSize === 9 && (field === 'title' || field === 'color')) {
                     if (gIdx === 4 && cIdx !== 4) {
                         const targetK = `${cIdx}-4`;
@@ -489,11 +468,20 @@
                 setIsUploading(true);
                 try {
                     const url = await compressImage(file);
-                    updateCell(selectedCell.gIdx, selectedCell.cIdx, 'images', [url]);
+                    const key = `${selectedCell.gIdx}-${selectedCell.cIdx}`;
+                    const currentImages = (data[key] || {}).images || [];
+                    updateCell(selectedCell.gIdx, selectedCell.cIdx, 'images', [...currentImages, url]);
                 } catch (e) {
                     alert("圖片上傳失敗");
                 }
                 setIsUploading(false);
+            };
+
+            const removeImage = (indexToRemove) => {
+                const key = `${selectedCell.gIdx}-${selectedCell.cIdx}`;
+                const currentImages = (data[key] || {}).images || [];
+                const newImages = currentImages.filter((_, idx) => idx !== indexToRemove);
+                updateCell(selectedCell.gIdx, selectedCell.cIdx, 'images', newImages);
             };
             
             const handleCellClick = (gIdx, cIdx, cellData) => {
@@ -507,6 +495,7 @@
                 }
                 setEditActiveField('title'); 
                 setSelectedCell({ gIdx: (gridSize===3 && zoomedGridIndex!==null) ? zoomedGridIndex : gIdx, cIdx, data: cellData });
+                setIsEmojiPickerOpen(false); 
             };
 
             const getNavClass = (gIdx, cIdx) => {
@@ -521,20 +510,14 @@
                 return '';
             };
 
-            // Enhanced Search Matcher
             const checkSearchMatch = (text, query) => {
                 if (!query) return true;
                 if (!text && text !== 0) return false;
                 const target = String(text).toLowerCase();
-                
-                // Boolean Logic: OR logic first (split by ' OR ')
                 const orGroups = query.split(/\s+OR\s+/i);
-                
                 return orGroups.some(group => {
-                    // Inside OR group: AND logic (split by space)
                     const terms = group.trim().split(/\s+/);
                     return terms.every(term => {
-                        // NOT logic: -term
                         if (term.startsWith('-')) {
                             const cleanTerm = term.substring(1).toLowerCase();
                             return cleanTerm && !target.includes(cleanTerm);
@@ -551,7 +534,7 @@
                     if (file.deleted) return;
                     let matchCount = 0;
                     if (checkSearchMatch(file.title, searchQuery)) matchCount += 10;
-                    if (checkSearchMatch(file.category, searchQuery)) matchCount += 5; // Search category too
+                    if (checkSearchMatch(file.category, searchQuery)) matchCount += 5;
                     if (file.cells) {
                         Object.values(file.cells).forEach(cell => {
                             const content = `${cell.title || ''} ${cell.note || ''}`;
@@ -610,29 +593,54 @@
 
             const handleExportJPG = async () => {
                 setLoading(true);
-                const element = document.getElementById('mandala-grid-container');
-                if (!element) return;
-                const exportContainer = element.cloneNode(true);
-                exportContainer.style.width = '1200px'; 
-                exportContainer.style.height = 'auto';
-                exportContainer.style.position = 'fixed';
-                exportContainer.style.top = '-9999px';
-                exportContainer.style.zIndex = '-999';
-                exportContainer.classList.add('export-mode');
-                const header = document.createElement('div');
-                header.style.textAlign = 'center';
-                header.style.marginBottom = '20px';
-                header.innerHTML = `<h1 class="garden-title" style="font-size:32px; color:#44403c; margin-bottom:5px;">${docMetadata.title}</h1><p style="font-size:14px; color:#78716c;">${docMetadata.category} | Linkc Mandala</p>`;
-                exportContainer.insertBefore(header, exportContainer.firstChild);
-                document.body.appendChild(exportContainer);
                 try {
-                    const canvas = await html2canvas(exportContainer, { scale: 2, useCORS: true, backgroundColor: '#fcfaf9' });
+                    const element = document.getElementById('mandala-grid-container');
+                    if (!element) throw new Error("找不到表格元件");
+                    
+                    const exportContainer = element.cloneNode(true);
+                    exportContainer.style.width = '1200px'; 
+                    exportContainer.style.height = 'auto';
+                    exportContainer.style.maxHeight = 'none';
+                    exportContainer.style.overflow = 'visible';
+                    
+                    // Use a safer off-screen method for cross-browser/desktop compatibility
+                    exportContainer.style.position = 'fixed';
+                    exportContainer.style.left = '0';
+                    exportContainer.style.top = '0';
+                    exportContainer.style.zIndex = '-9999';
+                    exportContainer.classList.add('export-mode');
+                    
+                    const header = document.createElement('div');
+                    header.style.textAlign = 'center';
+                    header.style.marginBottom = '20px';
+                    header.innerHTML = `<h1 class="garden-title" style="font-size:32px; color:#44403c; margin-bottom:5px;">${docMetadata.title}</h1><p style="font-size:14px; color:#78716c;">${docMetadata.category} | Linkc Mandala</p>`;
+                    exportContainer.insertBefore(header, exportContainer.firstChild);
+                    
+                    document.body.appendChild(exportContainer);
+                    
+                    // Critical: Wait for DOM to render images/fonts in the cloned node
+                    await new Promise(resolve => setTimeout(resolve, 800));
+
+                    const canvas = await html2canvas(exportContainer, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: '#fcfaf9',
+                        logging: false
+                    });
+
                     const link = document.createElement('a');
                     link.download = `${docMetadata.title}.jpg`;
                     link.href = canvas.toDataURL('image/jpeg', 0.9);
                     link.click();
-                } catch (e) { alert("圖片匯出失敗"); }
-                document.body.removeChild(exportContainer);
+                    
+                    document.body.removeChild(exportContainer);
+                } catch (e) { 
+                    console.error("Export Error:", e);
+                    alert("圖片匯出失敗: " + e.message); 
+                    // Clean up if error occurs
+                    const existingContainer = document.querySelector('.export-mode');
+                    if (existingContainer) document.body.removeChild(existingContainer);
+                }
                 setLoading(false);
                 setShowExportModal(false);
             };
@@ -687,22 +695,39 @@
 
             const handleExportPDF = async () => {
                 setLoading(true);
-                const element = document.getElementById('mandala-grid-container');
-                if (!element) return;
-                const exportContainer = element.cloneNode(true);
-                exportContainer.style.width = '1000px'; 
-                exportContainer.style.height = 'auto';
-                exportContainer.style.position = 'fixed';
-                exportContainer.style.top = '-9999px';
-                exportContainer.classList.add('export-mode');
-                const header = document.createElement('div');
-                header.style.textAlign = 'center';
-                header.style.marginBottom = '20px';
-                header.innerHTML = `<h1 class="garden-title" style="font-size:32px; color:#44403c; margin-bottom:5px;">${docMetadata.title}</h1>`;
-                exportContainer.insertBefore(header, exportContainer.firstChild);
-                document.body.appendChild(exportContainer);
                 try {
-                    const canvas = await html2canvas(exportContainer, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                    const element = document.getElementById('mandala-grid-container');
+                    if (!element) throw new Error("找不到表格元件");
+
+                    const exportContainer = element.cloneNode(true);
+                    exportContainer.style.width = '1000px'; 
+                    exportContainer.style.height = 'auto';
+                    exportContainer.style.maxHeight = 'none';
+                    exportContainer.style.overflow = 'visible';
+
+                    exportContainer.style.position = 'fixed';
+                    exportContainer.style.left = '0';
+                    exportContainer.style.top = '0';
+                    exportContainer.style.zIndex = '-9999';
+                    exportContainer.classList.add('export-mode');
+                    
+                    const header = document.createElement('div');
+                    header.style.textAlign = 'center';
+                    header.style.marginBottom = '20px';
+                    header.innerHTML = `<h1 class="garden-title" style="font-size:32px; color:#44403c; margin-bottom:5px;">${docMetadata.title}</h1>`;
+                    exportContainer.insertBefore(header, exportContainer.firstChild);
+                    
+                    document.body.appendChild(exportContainer);
+                    
+                    // Critical: Wait for DOM to render images/fonts in the cloned node
+                    await new Promise(resolve => setTimeout(resolve, 800));
+
+                    const canvas = await html2canvas(exportContainer, { 
+                        scale: 2, 
+                        useCORS: true, 
+                        backgroundColor: '#ffffff' 
+                    });
+                    
                     const imgData = canvas.toDataURL('image/jpeg', 0.95);
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -712,8 +737,14 @@
                     const imgHeight = (canvas.height * maxImgWidth) / canvas.width;
                     pdf.addImage(imgData, 'JPEG', margin, margin, maxImgWidth, imgHeight);
                     pdf.save(`${docMetadata.title}.pdf`);
-                } catch (e) { alert("PDF 匯出失敗"); }
-                document.body.removeChild(exportContainer);
+                    
+                    document.body.removeChild(exportContainer);
+                } catch (e) { 
+                    console.error("PDF Export Error:", e);
+                    alert("PDF 匯出失敗: " + e.message); 
+                    const existingContainer = document.querySelector('.export-mode');
+                    if (existingContainer) document.body.removeChild(existingContainer);
+                }
                 setLoading(false);
                 setShowExportModal(false);
             };
@@ -825,6 +856,24 @@
                 const currentVal = (data[key] || {})[editActiveField] || '';
                 updateCell(selectedCell.gIdx, selectedCell.cIdx, editActiveField, currentVal + emoji);
             };
+            
+            const openImagePreview = (images, index) => {
+                if (!images || images.length === 0) return;
+                setPreviewImages(images);
+                setPreviewIndex(index || 0);
+            };
+            
+            const nextPreviewImage = (e) => {
+                e.stopPropagation();
+                if (!previewImages) return;
+                setPreviewIndex((prev) => (prev + 1) % previewImages.length);
+            };
+            
+            const prevPreviewImage = (e) => {
+                e.stopPropagation();
+                if (!previewImages) return;
+                setPreviewIndex((prev) => (prev - 1 + previewImages.length) % previewImages.length);
+            };
 
             // -- Views --
             const renderCell = (gIdx, cIdx) => {
@@ -832,22 +881,22 @@
                 const cellData = data[`${targetGrid}-${cIdx}`] || {};
                 const navClass = getNavClass(targetGrid, cIdx);
                 
-                // Defaults Logic
                 const defaultBg = ((targetGrid===4 && cIdx===4)?'#ecfdf5':(targetGrid===4?'#fdfcdc':(cIdx===4?'#fdfcdc':'#ffffff')));
-                
-                // Use user color OR default - NO transparency added (as requested to preserve color)
                 const finalBg = cellData.color || defaultBg;
-                
-                // Text color calculated from brightness of finalBg
                 const textColor = getContrastColor(finalBg); 
 
                 return (
                     <div className={`relative border border-stone-300 p-1 flex flex-col h-full overflow-hidden group ${navClass}`}
                          style={{backgroundColor: finalBg, color: textColor}}
                          onClick={() => handleCellClick(targetGrid, cIdx, cellData)}>
-                        <div className="flex-1 overflow-hidden flex flex-col justify-start items-center w-full">
+                        <div className="flex-1 overflow-hidden flex flex-col justify-start items-center w-full min-h-0">
                             <div className="font-bold text-xs md:text-sm leading-tight mb-1 text-center w-full" dangerouslySetInnerHTML={{__html: safeMarkdownInline(cellData.title||'')}} />
-                            {viewStyle === 'standard' && <div className="text-[10px] opacity-80 overflow-hidden md-content w-full text-left" dangerouslySetInnerHTML={{__html: safeMarkdown(cellData.note||'')}} />}
+                            {viewStyle === 'standard' && (
+                                <CellNote 
+                                    note={cellData.note} 
+                                    onClick={() => setViewOnlyCell({ gIdx: targetGrid, cIdx, data: cellData })} 
+                                />
+                            )}
                         </div>
                         {navClass && <div className="edit-btn-overlay" onClick={(e)=>{ e.stopPropagation(); setSelectedCell({ gIdx: targetGrid, cIdx, data: cellData }); }}><Icons.Pencil/></div>}
                         
@@ -860,7 +909,7 @@
                             )}
                             {cellData.images && cellData.images.length > 0 && (
                                 <div className="content-icon bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600"
-                                     onClick={(e)=>{ e.stopPropagation(); setPreviewImage(cellData.images[0]); }}>
+                                     onClick={(e)=>{ e.stopPropagation(); openImagePreview(cellData.images, 0); }}>
                                     <Icons.Photo/>
                                 </div>
                             )}
@@ -905,7 +954,7 @@
                         <div className="text-xl font-bold text-stone-800 garden-title mt-1">Mandala Garden</div>
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto -mx-4 px-4 space-y-1"> {/* Scrollable Container */}
+                    <div className="flex-1 overflow-y-auto -mx-4 px-4 space-y-1"> 
                         <button 
                             onClick={() => { setShowGlobalSearchModal(true); setIsSidebarOpen(false); }} 
                             className="w-full text-left p-2 rounded flex items-center gap-2 hover:bg-stone-50 text-stone-600 mb-2 border border-stone-100"
@@ -921,7 +970,7 @@
                                 <span>標籤分類</span>
                                 <span className="text-[10px] bg-stone-100 px-1 rounded">{tagStats.length}</span>
                             </div>
-                            <div className="space-y-1 pb-2"> {/* Added pb-2 for bottom spacing in scroll */}
+                            <div className="space-y-1 pb-2"> 
                                 {tagStats.length === 0 && <div className="px-2 text-xs text-stone-300">尚無標籤 (使用 #tag)</div>}
                                 {tagStats.slice(0, showAllTags ? undefined : 8).map(tag => (
                                     <button key={tag.name} onClick={()=>{ setActiveCategory(tag.name); setIsSidebarOpen(false); }} className={`w-full text-left p-2 rounded flex justify-between items-center text-sm ${activeCategory===tag.name?'bg-emerald-50 text-emerald-700':''}`}>
@@ -984,7 +1033,6 @@
                     
                     {viewMode === 'browser' ? (
                         <div className="flex h-full bg-[#fcfaf9]">
-                            {/* Mobile Sidebar Overlay */}
                             {isSidebarOpen && (
                                 <div className="fixed inset-0 z-50 flex md:hidden">
                                     <div className="fixed inset-0 bg-black/50" onClick={() => setIsSidebarOpen(false)}></div>
@@ -995,7 +1043,6 @@
                                 </div>
                             )}
 
-                            {/* Desktop Sidebar */}
                             <aside className="w-64 bg-white border-r hidden md:flex flex-col p-4">
                                 <SidebarContent />
                             </aside>
@@ -1068,24 +1115,60 @@
                     )}
 
                     {/* Modals */}
-                    {/* ... existing Modals: previewImage, selectedCell, showSaveAsModal, showImportModal, showShareModal, showExportModal ... */}
-                    {previewImage && (
-                        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60]" onClick={()=>setPreviewImage(null)}>
-                            <img src={previewImage} className="max-w-full max-h-full object-contain" />
-                            <button className="absolute top-4 right-4 text-white text-4xl" onClick={()=>setPreviewImage(null)}>×</button>
+                    {previewImages && (
+                        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[60]" onClick={()=>setPreviewImages(null)}>
+                            <div className="relative w-full h-full flex items-center justify-center">
+                                {previewImages.length > 1 && (
+                                    <>
+                                        <button 
+                                            className="absolute left-4 z-10 text-white/50 hover:text-white transition" 
+                                            onClick={prevPreviewImage}
+                                        >
+                                            <Icons.ChevronLeft />
+                                        </button>
+                                        <button 
+                                            className="absolute right-4 z-10 text-white/50 hover:text-white transition" 
+                                            onClick={nextPreviewImage}
+                                        >
+                                            <Icons.ChevronRight />
+                                        </button>
+                                    </>
+                                )}
+                                <img src={previewImages[previewIndex]} className="max-w-full max-h-full object-contain p-4" onClick={(e)=>e.stopPropagation()} />
+                                <div className="absolute bottom-4 text-white/70 text-sm bg-black/50 px-3 py-1 rounded-full">
+                                    {previewIndex + 1} / {previewImages.length}
+                                </div>
+                                <button className="absolute top-4 right-4 text-white text-4xl leading-none" onClick={()=>setPreviewImages(null)}>×</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {viewOnlyCell && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setViewOnlyCell(null)}>
+                            <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[80vh] animate-slide-up" onClick={e => e.stopPropagation()}>
+                                <div className="p-4 border-b flex justify-between items-center bg-stone-50 rounded-t-xl">
+                                    <h3 className="font-bold text-lg text-stone-800">完整備註</h3>
+                                    <button onClick={() => setViewOnlyCell(null)} className="text-stone-400 hover:text-stone-600"><Icons.X/></button>
+                                </div>
+                                <div className="p-6 overflow-y-auto">
+                                     <h4 className="font-bold text-xl mb-4 text-emerald-800 border-b pb-2">{viewOnlyCell.data.title || '無標題'}</h4>
+                                     <div className="prose prose-stone prose-sm max-w-none md-content" dangerouslySetInnerHTML={{__html: safeMarkdown(viewOnlyCell.data.note || '無內容')}} />
+                                </div>
+                                 <div className="p-4 border-t bg-stone-50 flex justify-end rounded-b-xl">
+                                    <button onClick={() => setViewOnlyCell(null)} className="px-4 py-2 bg-stone-200 hover:bg-stone-300 rounded text-stone-700 font-medium">關閉</button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {selectedCell && (
                         <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50" onClick={()=>setSelectedCell(null)}>
                             <div className="bg-white w-full h-[90dvh] md:h-auto md:max-h-[85vh] md:w-full md:max-w-md rounded-t-xl md:rounded-xl overflow-hidden shadow-2xl flex flex-col transition-transform duration-300 animate-slide-up md:animate-none" onClick={e=>e.stopPropagation()}>
-                                <div className="p-3 bg-emerald-600 text-white font-bold flex justify-between items-center">
+                                <div className="p-3 bg-emerald-600 text-white font-bold flex justify-between items-center shrink-0">
                                     <span className="text-sm md:text-base">編輯內容 {selectedCell.gIdx}-{selectedCell.cIdx}</span>
                                     <button onClick={()=>setSelectedCell(null)} className="text-white/80 hover:text-white px-2">✕</button>
                                 </div>
                                 <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4">
-                                    
-                                    {/* Title Section */}
                                     <div className="space-y-1">
                                         <label className="text-xs text-stone-500 font-bold">標題</label>
                                         <input 
@@ -1096,9 +1179,7 @@
                                             onFocus={()=>setEditActiveField('title')}
                                         />
                                     </div>
-
-                                    {/* Note Section */}
-                                    <div className="space-y-1 flex-1">
+                                    <div className="space-y-1"> {/* Removed flex-1 to fix squashing */}
                                         <label className="text-xs text-stone-500 font-bold">備註</label>
                                         <textarea 
                                             className={`w-full border p-2 rounded h-32 text-stone-800 focus:ring-2 focus:ring-emerald-500 outline-none resize-none ${editActiveField==='note'?'border-emerald-500':''}`} 
@@ -1108,44 +1189,46 @@
                                             onFocus={()=>setEditActiveField('note')}
                                         ></textarea>
                                     </div>
-                                    
-                                    {/* Emoji Section - MOVED HERE */}
-                                    <div className="space-y-2 border rounded-lg p-2 bg-stone-50/50">
-                                        <div className="flex justify-between items-center px-1">
-                                            <span className="text-xs font-bold text-stone-500 flex items-center gap-1">😀 插入 Emoji</span>
+                                    <div className="border rounded-lg bg-stone-50/50 overflow-hidden transition-all duration-300 shrink-0">
+                                        <button 
+                                            className="w-full flex justify-between items-center p-2 hover:bg-stone-100 transition-colors outline-none"
+                                            onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-stone-400 text-[10px] transform transition-transform duration-200" style={{ transform: isEmojiPickerOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                                                <span className="text-xs font-bold text-stone-500 flex items-center gap-1">😀 插入 Emoji</span>
+                                            </div>
                                             <span className="text-[10px] text-stone-400 bg-white px-2 py-0.5 rounded border">至: {editActiveField === 'title' ? '標題' : '備註'}</span>
-                                        </div>
-                                        
-                                        {/* Category Tabs */}
-                                        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
-                                            {Object.keys(EMOJI_CATEGORIES).map(cat => (
-                                                <button 
-                                                    key={cat}
-                                                    type="button"
-                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEmojiTab(cat); }}
-                                                    className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${emojiTab === cat ? 'bg-emerald-100 text-emerald-700 font-bold' : 'bg-white text-stone-500 hover:bg-stone-100'}`}
-                                                >
-                                                    {cat}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        {/* Emoji Grid */}
-                                        <div className="grid grid-cols-8 gap-1 h-32 overflow-y-auto p-1 bg-white rounded border border-stone-100">
-                                            {EMOJI_CATEGORIES[emojiTab].map(emoji => (
-                                                <button 
-                                                    key={emoji} 
-                                                    type="button"
-                                                    onClick={() => handleEmojiClick(emoji)} 
-                                                    className="aspect-square flex items-center justify-center text-lg hover:bg-emerald-50 rounded transition hover:scale-110 active:scale-95"
-                                                >
-                                                    {emoji}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        </button>
+                                        {isEmojiPickerOpen && (
+                                            <div className="p-2 pt-0 border-t border-stone-100">
+                                                <div className="flex gap-1 overflow-x-auto py-2 scrollbar-hide">
+                                                    {Object.keys(EMOJI_CATEGORIES).map(cat => (
+                                                        <button 
+                                                            key={cat}
+                                                            type="button"
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEmojiTab(cat); }}
+                                                            className={`px-3 py-1 text-xs rounded-full whitespace-nowrap transition-colors ${emojiTab === cat ? 'bg-emerald-100 text-emerald-700 font-bold' : 'bg-white text-stone-500 hover:bg-stone-100'}`}
+                                                        >
+                                                            {cat}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div className="grid grid-cols-8 gap-1 h-32 overflow-y-auto p-1 bg-white rounded border border-stone-100">
+                                                    {EMOJI_CATEGORIES[emojiTab].map(emoji => (
+                                                        <button 
+                                                            key={emoji} 
+                                                            type="button"
+                                                            onClick={() => handleEmojiClick(emoji)} 
+                                                            className="aspect-square flex items-center justify-center text-lg hover:bg-emerald-50 rounded transition hover:scale-110 active:scale-95"
+                                                        >
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-
-                                    {/* Tools Row: Link & Color */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <label className="text-xs text-stone-500 font-bold">連結</label>
@@ -1158,25 +1241,41 @@
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Image Upload */}
                                     <div className="space-y-1">
                                         <label className="text-xs text-stone-500 font-bold">圖片</label>
-                                        <div className="border p-2 rounded bg-stone-50 flex items-center justify-between">
-                                             {isUploading ? (
-                                                <span className="text-emerald-600 text-sm animate-pulse">上傳中...</span>
-                                            ) : (
-                                                <input type="file" className="text-sm text-stone-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200" onChange={e => handleImageUpload(e.target.files[0])} />
-                                            )}
+                                        <div className="border p-2 rounded bg-stone-50 flex flex-col gap-2">
+                                            <div className="flex items-center justify-between">
+                                                {isUploading ? (
+                                                    <span className="text-emerald-600 text-sm animate-pulse">上傳中...</span>
+                                                ) : (
+                                                    <input type="file" className="text-sm text-stone-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200" onChange={e => handleImageUpload(e.target.files[0])} />
+                                                )}
+                                                {(data[`${selectedCell.gIdx}-${selectedCell.cIdx}`] || {}).images?.length > 0 && (
+                                                    <span className="text-xs text-stone-500 bg-white px-2 py-1 rounded border">共 {(data[`${selectedCell.gIdx}-${selectedCell.cIdx}`] || {}).images.length} 張</span>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Thumbnail List */}
                                             {(data[`${selectedCell.gIdx}-${selectedCell.cIdx}`] || {}).images?.length > 0 && (
-                                                <span className="text-xs text-stone-500 bg-white px-2 py-1 rounded border">已存 1 圖</span>
+                                                <div className="flex gap-2 overflow-x-auto pb-1 pt-1 border-t border-stone-200 mt-1">
+                                                    {(data[`${selectedCell.gIdx}-${selectedCell.cIdx}`] || {}).images.map((img, idx) => (
+                                                        <div key={idx} className="relative flex-shrink-0 w-12 h-12 border rounded bg-white group/thumb">
+                                                            <img src={img} className="w-full h-full object-cover rounded-sm cursor-pointer" onClick={()=>openImagePreview((data[`${selectedCell.gIdx}-${selectedCell.cIdx}`] || {}).images, idx)} />
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); removeImage(idx); }}
+                                                                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600"
+                                                                title="刪除"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
-                                
-                                {/* Footer Buttons */}
-                                <div className="p-3 border-t bg-stone-50 flex justify-between items-center">
+                                <div className="p-3 border-t bg-stone-50 flex justify-between items-center shrink-0">
                                     <button 
                                         onClick={()=>clearCell(selectedCell.gIdx, selectedCell.cIdx)}
                                         className="text-red-500 text-sm hover:bg-red-50 px-3 py-1.5 rounded transition font-medium"
@@ -1208,7 +1307,6 @@
                         </div>
                     )}
 
-                    {/* Metadata Modal (New) */}
                     {showMetadataModal && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                             <div className="bg-white p-6 rounded-xl w-80">
